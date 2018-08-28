@@ -160,11 +160,17 @@ public class DownloadServiceImpl extends DefaultComponent implements DownloadSer
 
     @Override
     public String getDownloadUrl(DocumentModel doc, String xpath, String filename) {
-        return getDownloadUrl(doc.getRepositoryName(), doc.getId(), xpath, filename);
+        return getDownloadUrl(doc.getRepositoryName(), doc.getId(), xpath, filename, doc.getChangeToken());
     }
 
     @Override
     public String getDownloadUrl(String repositoryName, String docId, String xpath, String filename) {
+        return getDownloadUrl(repositoryName, docId, xpath, filename, null);
+    }
+
+    @Override
+    public String getDownloadUrl(String repositoryName, String docId, String xpath, String filename,
+            String changeToken) {
         StringBuilder sb = new StringBuilder();
         sb.append(NXFILE);
         sb.append("/").append(repositoryName);
@@ -176,6 +182,9 @@ public class DownloadServiceImpl extends DefaultComponent implements DownloadSer
                 filename = getSanitizedFilenameWithoutPath(filename);
                 sb.append("/").append(URIUtils.quoteURIPathComponent(filename, true));
             }
+        }
+        if (StringUtils.isNotBlank(changeToken)) {
+            sb.append("?").append(CoreSession.CHANGE_TOKEN).append("=").append(changeToken);
         }
         return sb.toString();
     }
