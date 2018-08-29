@@ -150,6 +150,7 @@ public class StreamBulkProcessor implements StreamProcessorTopology {
         }
 
         protected void processRecord(ComputationContext context, Record record) {
+            System.out.println("StreamBulkProcessor.BulkDocumentScrollerComputation.processRecord() - start");
             KeyValueStore kvStore = Framework.getService(KeyValueService.class).getKeyValueStore(BULK_KV_STORE_NAME);
             try {
                 String commandId = record.getKey();
@@ -158,6 +159,8 @@ public class StreamBulkProcessor implements StreamProcessorTopology {
                 if (!SCHEDULED.equals(currentStatus.getState())) {
                     log.error("Discard record: " + record + " because it's already building");
                     context.askForCheckpoint();
+                    System.out.println(
+                            "StreamBulkProcessor.BulkDocumentScrollerComputation.processRecord() - end not scheduled");
                     return;
                 }
                 currentStatus.setState(SCROLLING_RUNNING);
@@ -196,19 +199,20 @@ public class StreamBulkProcessor implements StreamProcessorTopology {
                         // there's at most one record because we loop while scrolling
                         if (!documentIds.isEmpty()) {
                             produceBucket(context, command.getAction(), commandId, documentCount);
-                        } else {
-                            context.askForCheckpoint();
                         }
 
                         Instant scrollEndTime = Instant.now();
 
                         currentStatus.setScrollStartTime(scrollStartTime);
                         currentStatus.setScrollEndTime(scrollEndTime);
-                        currentStatus.setState(RUNNING);
+                        currentStatus.setState(documentIds.isEmpty() ? COMPLETED : RUNNING);
                         currentStatus.setCount(documentCount);
                         context.produceRecord(KVWRITER_ACTION_NAME, commandId,
                                 BulkCodecs.getBulkStatusCodec().encode(currentStatus));
 
+                        context.askForCheckpoint();
+
+                        System.out.println("StreamBulkProcessor.BulkDocumentScrollerComputation.processRecord() - end");
                     } finally {
                         loginContext.logout();
                     }
@@ -254,6 +258,7 @@ public class StreamBulkProcessor implements StreamProcessorTopology {
         @Override
         public void processTimer(ComputationContext context, String key, long timestamp) {
             if (!counters.isEmpty()) {
+                System.out.println("StreamBulkProcessor.CounterComputation.processTimer() - start");
                 KeyValueStore kvStore = Framework.getService(KeyValueService.class)
                                                  .getKeyValueStore(BULK_KV_STORE_NAME);
                 counters.entrySet()
@@ -263,6 +268,7 @@ public class StreamBulkProcessor implements StreamProcessorTopology {
                         .forEach(status -> context.produceRecord(KVWRITER_ACTION_NAME, key, status));
                 counters.clear();
                 context.askForCheckpoint();
+                System.out.println("StreamBulkProcessor.CounterComputation.processTimer() - end");
             }
             context.setTimer("counter", System.currentTimeMillis() + counterThresholdMs);
         }
@@ -296,10 +302,14 @@ public class StreamBulkProcessor implements StreamProcessorTopology {
 
         @Override
         public void processRecord(ComputationContext context, String inputStreamName, Record record) {
+            System.out.println("StreamBulkProcessor.KeyValueWriterComputation.processRecord() - start");
             KeyValueStore kvStore = Framework.getService(KeyValueService.class).getKeyValueStore(BULK_KV_STORE_NAME);
             BulkStatus status = BulkCodecs.getBulkStatusCodec().decode(record.getData());
+            System.out.println("StreamBulkProcessor.KeyValueWriterComputation.processRecord() " + inputStreamName + " "
+                    + status.state + " " + status.processed + " " + status.getId());
             kvStore.put(status.getId() + STATUS, record.getData());
             context.askForCheckpoint();
+            System.out.println("StreamBulkProcessor.KeyValueWriterComputation.processRecord() - end");
         }
     }
 

@@ -18,11 +18,14 @@
  */
 package org.nuxeo.ecm.core.trash.test;
 
+import org.nuxeo.ecm.core.bulk.CoreBulkFeature;
 import org.nuxeo.runtime.test.runner.Deploy;
+import org.nuxeo.runtime.test.runner.Features;
 
 /**
  * @since 10.1
  */
+@Features(CoreBulkFeature.class)
 @Deploy("org.nuxeo.ecm.core.test.tests:OSGI-INF/test-trash-service-property-override.xml")
 public class TestPropertyTrashService extends AbstractTestTrashService {
 

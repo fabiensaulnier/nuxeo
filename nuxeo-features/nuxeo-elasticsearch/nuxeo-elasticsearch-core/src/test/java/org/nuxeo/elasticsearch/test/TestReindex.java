@@ -27,7 +27,6 @@ import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
-import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
 import org.junit.After;
 import org.junit.Assert;
@@ -88,19 +87,17 @@ public class TestReindex {
     protected WorkManager workManager;
 
     @Inject
-    ElasticSearchAdmin esa;
+    protected ElasticSearchAdmin esa;
 
     @Inject
-    LogCaptureFeature.Result logCaptureResult;
+    protected LogCaptureFeature.Result logCaptureResult;
 
     @Inject
-    LogFeature logFeature;
+    protected LogFeature logFeature;
 
     private boolean syncMode = false;
 
     private int commandProcessed;
-
-    private Priority consoleThresold;
 
     // Number of processed command since the startTransaction
     public void assertNumberOfCommandProcessed(int processed) throws Exception {

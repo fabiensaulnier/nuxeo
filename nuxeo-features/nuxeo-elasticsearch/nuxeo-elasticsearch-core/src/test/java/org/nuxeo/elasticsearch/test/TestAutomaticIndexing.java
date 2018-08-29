@@ -67,6 +67,7 @@ import org.nuxeo.ecm.core.api.security.impl.ACLImpl;
 import org.nuxeo.ecm.core.api.security.impl.ACPImpl;
 import org.nuxeo.ecm.core.api.trash.TrashService;
 import org.nuxeo.ecm.core.api.versioning.VersioningService;
+import org.nuxeo.ecm.core.bulk.CoreBulkFeature;
 import org.nuxeo.ecm.core.test.CoreFeature;
 import org.nuxeo.ecm.core.work.api.WorkManager;
 import org.nuxeo.ecm.platform.tag.FacetedTagService;
@@ -87,7 +88,7 @@ import org.nuxeo.runtime.transaction.TransactionHelper;
  * Test "on the fly" indexing via the listener system
  */
 @RunWith(FeaturesRunner.class)
-@Features({ RepositoryElasticSearchFeature.class })
+@Features({ RepositoryElasticSearchFeature.class, CoreBulkFeature.class })
 @Deploy("org.nuxeo.ecm.platform.tag")
 @Deploy("org.nuxeo.ecm.automation.core")
 @Deploy("org.nuxeo.elasticsearch.core.test:elasticsearch-test-contrib.xml")
@@ -816,7 +817,8 @@ public class TestAutomaticIndexing {
         Assert.assertEquals("v3", ret.get(0).getTitle());
         String versionSeriesId = ret.get(0).getVersionSeriesId();
 
-        ret = ess.query(new NxQueryBuilder(session).nxql("SELECT * FROM Document WHERE ecm:versionVersionableId = '" + versionSeriesId + "'"));
+        ret = ess.query(new NxQueryBuilder(session).nxql(
+                "SELECT * FROM Document WHERE ecm:versionVersionableId = '" + versionSeriesId + "'"));
         Assert.assertEquals(3, ret.totalSize());
     }
 
@@ -1050,7 +1052,6 @@ public class TestAutomaticIndexing {
 
     }
 
-
     @Test
     public void pathLevelFieldMustBeSeenAsKeyword() throws Exception {
         // Creates folders with names that can be taken as timestamp
@@ -1062,7 +1063,8 @@ public class TestAutomaticIndexing {
         waitForCompletion();
 
         startTransaction();
-        // Now creates folders with normal names to check that ecm:path@level# fields are typed as keyword and not as date
+        // Now creates folders with normal names to check that ecm:path@level# fields are typed as keyword and not as
+        // date
         folder = session.createDocumentModel("/", "a-folder-name", "Folder");
         session.createDocument(folder);
         folder = session.createDocumentModel("/a-folder-name", "foo", "Folder");

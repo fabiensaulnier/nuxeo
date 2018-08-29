@@ -137,7 +137,7 @@ public abstract class AbstractTrashService implements TrashService {
             if (doc.isLocked()) {
                 String locker = getDocumentLocker(doc);
                 if (principal == null
-                        || (principal instanceof NuxeoPrincipal && ((NuxeoPrincipal) principal).isAdministrator())
+                        || principal instanceof NuxeoPrincipal && ((NuxeoPrincipal) principal).isAdministrator()
                         || principal.getName().equals(locker)) {
                     info.docs.add(doc);
                 } else {

@@ -25,6 +25,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.security.Principal;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -50,6 +51,8 @@ import org.nuxeo.ecm.core.api.security.SecurityConstants;
 import org.nuxeo.ecm.core.api.security.impl.ACLImpl;
 import org.nuxeo.ecm.core.api.security.impl.ACPImpl;
 import org.nuxeo.ecm.core.api.trash.TrashService;
+import org.nuxeo.ecm.core.bulk.BulkService;
+import org.nuxeo.ecm.core.bulk.CoreBulkFeature;
 import org.nuxeo.ecm.core.test.CoreFeature;
 import org.nuxeo.ecm.platform.test.PlatformFeature;
 import org.nuxeo.ecm.platform.userworkspace.api.UserWorkspaceService;
@@ -60,7 +63,7 @@ import org.nuxeo.runtime.test.runner.Features;
 import org.nuxeo.runtime.test.runner.FeaturesRunner;
 
 @RunWith(FeaturesRunner.class)
-@Features(PlatformFeature.class)
+@Features({ PlatformFeature.class, CoreBulkFeature.class })
 @Deploy("org.nuxeo.ecm.platform.userworkspace.api")
 @Deploy("org.nuxeo.ecm.platform.userworkspace.types")
 @Deploy("org.nuxeo.ecm.platform.userworkspace.core")
@@ -79,6 +82,9 @@ public class TestUserWorkspace {
 
     @Inject
     protected PathSegmentService pathSegments;
+
+    @Inject
+    public BulkService bulkService;
 
     @Test
     public void testRestrictedAccess() throws Exception {
@@ -346,26 +352,32 @@ public class TestUserWorkspace {
     }
 
     /**
+     * @throws InterruptedException
      * @since 10.3
      */
     @Test
-    public void testCanRetrieveUserWorkspaceWithTrashedDomain() {
+    public void testCanRetrieveUserWorkspaceWithTrashedDomain() throws InterruptedException {
         try (CloseableCoreSession userSession = coreFeature.openCoreSession("toto")) {
             DocumentModel uw = uwm.getCurrentUserPersonalWorkspace(userSession);
             assertNotNull(uw);
         }
         List<DocumentModel> docs = session.getChildren(session.getRootDocument().getRef())
-                                        .stream()
-                                        .collect(Collectors.toList());
+                                          .stream()
+                                          .collect(Collectors.toList());
         TrashService trashService = Framework.getService(TrashService.class);
         trashService.trashDocuments(docs);
+        bulkService.await(Duration.ofSeconds(30));
         session.save();
+
         try (CloseableCoreSession userSession = coreFeature.openCoreSession("toto")) {
             DocumentModel uw = uwm.getCurrentUserPersonalWorkspace(userSession);
             assertNull(uw);
         }
+
         trashService.untrashDocuments(docs);
+        bulkService.await(Duration.ofSeconds(30));
         session.save();
+
         try (CloseableCoreSession userSession = coreFeature.openCoreSession("toto")) {
             DocumentModel uw = uwm.getCurrentUserPersonalWorkspace(userSession);
             assertNotNull(uw);

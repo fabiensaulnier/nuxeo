@@ -37,9 +37,10 @@ import org.nuxeo.ecm.core.api.DocumentModelList;
 import org.nuxeo.ecm.core.api.PathRef;
 import org.nuxeo.ecm.core.api.VersioningOption;
 import org.nuxeo.ecm.core.api.model.PropertyNotFoundException;
+import org.nuxeo.ecm.core.api.trash.TrashService;
+import org.nuxeo.ecm.core.bulk.CoreBulkFeature;
 import org.nuxeo.ecm.core.test.annotations.Granularity;
 import org.nuxeo.ecm.core.test.annotations.RepositoryConfig;
-import org.nuxeo.ecm.core.api.trash.TrashService;
 import org.nuxeo.ecm.core.work.api.WorkManager;
 import org.nuxeo.elasticsearch.api.ElasticSearchAdmin;
 import org.nuxeo.elasticsearch.api.ElasticSearchIndexing;
@@ -53,7 +54,7 @@ import org.nuxeo.runtime.test.runner.FeaturesRunner;
 import org.nuxeo.runtime.transaction.TransactionHelper;
 
 @RunWith(FeaturesRunner.class)
-@Features({ RepositoryElasticSearchFeature.class })
+@Features({ RepositoryElasticSearchFeature.class, CoreBulkFeature.class })
 @Deploy("org.nuxeo.elasticsearch.core:elasticsearch-test-contrib.xml")
 @RepositoryConfig(cleanup = Granularity.METHOD)
 public class TestCompareCoreWithES {
@@ -87,7 +88,7 @@ public class TestCompareCoreWithES {
             doc.setPropertyValue("dc:nature", "Nature" + i);
             doc.setPropertyValue("dc:rights", "Rights" + i % 2);
             doc.setPropertyValue("dc:subjects",
-                    (i % 2 == 0) ? new String[] { "Subjects1" } : new String[] { "Subjects1", "Subjects2" });
+                    i % 2 == 0 ? new String[] { "Subjects1" } : new String[] { "Subjects1", "Subjects2" });
             doc.setPropertyValue("relatedtext:relatedtextresources",
                     (Serializable) Arrays.asList(Collections.singletonMap("relatedtextid", "123")));
             doc = session.createDocument(doc);
@@ -179,7 +180,7 @@ public class TestCompareCoreWithES {
             value = "__NOTFOUND__";
         }
         if (value instanceof Object[]) {
-            value = (Serializable) Arrays.asList(((Object[]) value));
+            value = (Serializable) Arrays.asList((Object[]) value);
         }
         if (value instanceof List && ((List<?>) value).isEmpty()) {
             value = null;

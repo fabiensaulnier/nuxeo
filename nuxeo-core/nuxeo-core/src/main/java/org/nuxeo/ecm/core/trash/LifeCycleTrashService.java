@@ -34,6 +34,7 @@ import org.nuxeo.ecm.core.api.security.SecurityConstants;
 /**
  * @deprecated since 10.1, use {@link PropertyTrashService} instead.
  */
+@Deprecated
 public class LifeCycleTrashService extends AbstractTrashService {
 
     private static final Log log = LogFactory.getLog(LifeCycleTrashService.class);
@@ -175,8 +176,8 @@ public class LifeCycleTrashService extends AbstractTrashService {
             case TRASHED_STATE_IN_MIGRATION:
             case TRASHED_STATE_IS_DEDICATED_PROPERTY:
                 return false;
-        default:
-            throw new UnsupportedOperationException(feature.name());
+            default:
+                throw new UnsupportedOperationException(feature.name());
         }
     }
 

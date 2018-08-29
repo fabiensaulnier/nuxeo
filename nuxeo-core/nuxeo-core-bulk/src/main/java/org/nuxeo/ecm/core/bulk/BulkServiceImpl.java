@@ -36,6 +36,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.nuxeo.lib.stream.computation.Record;
 import org.nuxeo.lib.stream.log.LogAppender;
+import org.nuxeo.lib.stream.log.LogLag;
 import org.nuxeo.lib.stream.log.LogManager;
 import org.nuxeo.runtime.api.Framework;
 import org.nuxeo.runtime.kv.KeyValueService;
@@ -132,7 +133,8 @@ public class BulkServiceImpl implements BulkService {
         long deadline = System.currentTimeMillis() + duration.toMillis();
         for (String stream : streams) {
             // when there is no lag between producer and consumer we are done
-            while (logManager.getLag(stream, stream).lag() > 0) {
+            LogLag lag = logManager.getLag(stream, stream);
+            while (lag.lag() > 0) {
                 if (System.currentTimeMillis() > deadline) {
                     return false;
                 }

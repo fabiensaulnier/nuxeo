@@ -77,10 +77,7 @@ public abstract class AbstractBulkAction implements StreamProcessorTopology {
     public Topology getTopology(Map<String, String> options) {
         int size = getOptionAsInteger(options, BATCH_SIZE_OPT, DEFAULT_BATCH_SIZE);
         int timer = getOptionAsInteger(options, BATCH_THRESHOLD_MS_OPT, DEFAULT_BATCH_THRESHOLD_MS);
-        return Topology
-                       .builder()
-                       .addComputation(() -> createComputation(size, timer), getIOs())
-                       .build();
+        return Topology.builder().addComputation(() -> createComputation(size, timer), getIOs()).build();
     }
 
     protected List<String> getIOs() {
@@ -126,6 +123,7 @@ public abstract class AbstractBulkAction implements StreamProcessorTopology {
 
         @Override
         public void processRecord(ComputationContext context, String inputStreamName, Record record) {
+            System.out.println(getClass().getSimpleName() + ".processRecord() - start");
             String commandId = commandIdFrom(record);
             if (currentCommandId == null) {
                 // first time we need to process something
@@ -141,6 +139,7 @@ public abstract class AbstractBulkAction implements StreamProcessorTopology {
             if (documentIds.size() >= size) {
                 processBatch(context);
             }
+            System.out.println(getClass().getSimpleName() + ".processRecord() - end");
         }
 
         @Override
@@ -166,6 +165,7 @@ public abstract class AbstractBulkAction implements StreamProcessorTopology {
         }
 
         protected void processBatch(ComputationContext context) {
+            System.out.println(getClass().getSimpleName() + ".processBatch() - start");
             if (!documentIds.isEmpty()) {
                 TransactionHelper.runInTransaction(() -> {
                     try {
@@ -185,6 +185,7 @@ public abstract class AbstractBulkAction implements StreamProcessorTopology {
                 documentIds.clear();
                 context.askForCheckpoint();
             }
+            System.out.println(getClass().getSimpleName() + ".processBatch() - end");
         }
 
         protected abstract void compute(CoreSession session, List<String> ids, Map<String, Serializable> properties);
